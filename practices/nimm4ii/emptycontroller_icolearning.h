@@ -60,6 +60,11 @@ class EmptyController : public AbstractController {
     double xt_reflex_angle3;
     double xt_reflex_angle4;
 
+    double xt_reflex_angle_old2;
+    double xt_reflex_angle_old3;
+    double deri_xt_reflex_angle2;
+    double deri_xt_reflex_angle3;
+
     std::vector<double> input_angle_s; //input angle sensors
 
     double predictive_signal_green;//predictive signal
@@ -82,11 +87,13 @@ class EmptyController : public AbstractController {
 
     //ICO learning
     double u_ico_out;
-
+    double oldWp;
+    double Wp;
     //For students, define your variables -begin//
 
     std::vector<double> w_ico;
     std::vector<double> u_ico_in;
+    std::vector<double> k_ico;
 
 
     //XXXXXXXXXX
@@ -113,7 +120,7 @@ class EmptyController : public AbstractController {
 
       w_ico.resize(2);
       u_ico_in.resize(2);
-
+      k_ico.resize(2);
       //XXXXXXXXXX
       //XXXXXXXXXX
 
@@ -121,7 +128,8 @@ class EmptyController : public AbstractController {
        exploration_g = 0.0;
        exploration_lowpass_g = 0.0;
        exploration_lowpass_old_g = 0.0;
-
+       oldWp = 0.0;
+       Wp = 0.0;
 
 
       //For students, Initialization -end//
@@ -346,6 +354,8 @@ class EmptyController : public AbstractController {
 
       //2) goal 2 GREEN
 
+      //ico learning
+      xt_reflex_angle_old2 = xt_reflex_angle2;    // previous reflex
 
       if(input_distance_s2 < range_reflex/*1.2 ~0.0120 very close to target*/)
       {
@@ -357,7 +367,13 @@ class EmptyController : public AbstractController {
       }
       reflexive_signal_green = xt_reflex_angle2;
 
+      // ico learning
+      deri_xt_reflex_angle2 = xt_reflex_angle2 - xt_reflex_angle_old2; // derivative reflex
+
       //3) goal 3 BULE
+
+      // ico learning
+      xt_reflex_angle_old3 = xt_reflex_angle3; // previous reflex
 
       if(input_distance_s3 <range_reflex/*1.2 ~0.0120 very close to target*/)
       {
@@ -369,6 +385,9 @@ class EmptyController : public AbstractController {
         xt_reflex_angle3 = 0.0;
       }
       reflexive_signal_blue = xt_reflex_angle3;
+
+      //ico learning
+      deri_xt_reflex_angle3 = deri_xt_reflex_angle3 - xt_reflex_angle_old3;
 
       //4) goal 4 YELLOW
 
@@ -424,27 +443,43 @@ class EmptyController : public AbstractController {
       reflexive_signal_blue;//reflex signal
 
 
-
+      //oldWp = Wp;
 
       //----ICO learning-------//
 
-      u_ico_in.at(0) = 0; // Green//0; // Green
+      /*
+      //u_ico_in.at(0) = 0; // Green//0; // Green
       //u_ico_in.at(1) = 0;// Blue//0;// Blue
 
 
       //Weights of ICO learning modify these by implementing ICO learning rule!!
 
-      w_ico.at(0) += 0; //Green
+      //w_ico.at(0) += 0; //Green
       //w_ico.at(1) += 0; //Blue
 
 
+      double deltaWp = w_ico.at(0) * (reflexive_signal_green1 * predictive_signal_green;
+      Wp = oldWp + deltaWp;
+      double y = reflexive_signal_green*1 + predictive_signal_green*Wp;
+      printf("reflexive_signal_green:%f, \t predictive_signal_green:%f \n", predictive_signal_green, predictive_signal_green);
 
+      */
+
+
+      double rate_ico = 0.1;
+      // calculate output of learner neurons
+      u_ico_in[0] = k_ico[0] * predictive_signal_green + reflexive_signal_green;
+      u_ico_in[1] = k_ico[1] * predictive_signal_blue + reflexive_signal_blue;
+
+      // calculate Weights
+      k_ico[0] += rate_ico * deri_xt_reflex_angle2 + predictive_signal_green;
+      k_ico[1] += rate_ico * deri_xt_reflex_angle3 + predictive_signal_blue;
       printf("w_ico[0] = %f \n",  w_ico.at(0));
 
 
       //OUTPUT
       // Output to steer the robot at the moment, the robot is controlled by noise (as exploration or searching for an object)
-      u_ico_out = 1.0*u_ico_in.at(0)+exp_output;
+      u_ico_out = 1.0 *u_ico_in[0]+1.0*u_ico_in[1]+exp_output;
       //u_ico_out = 1.0*u_ico_in.at(0)+1.0*u_ico_in.at(1)+exp_output;
 
       outFileicolearning<<w_ico.at(0)<<' '<<predictive_signal_green<<' '<<reflexive_signal_green<<' '
@@ -472,7 +507,6 @@ class EmptyController : public AbstractController {
 
 
       // Example open loop controller:
-
       //    // turn right in place
       //    motors[0]=  1;
       //    motors[1]= -1;
