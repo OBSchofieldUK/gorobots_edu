@@ -111,7 +111,7 @@ double ANN_XNOR::FeedforwardNetwork (double i0, double i1, double d)
  */
 
 {
-  
+
 
   //STEP 1: Present input pattern [2 inputs for XNOR ]//////////////
 
@@ -122,18 +122,19 @@ double ANN_XNOR::FeedforwardNetwork (double i0, double i1, double d)
 
   // Calculate the net values for the hidden layer neurons.
   //Activation
-  a_Hidden[0] = 0;
+  a_Hidden[0] = BiasH[0] * WeightH_B[0] + Input[0] * WeightH_I[0][0] + Input[1] * WeightO_I[0][1];
 
   //Activity
-  o_Hidden[0]  = 0;
+  o_Hidden[0]  = sigmoid(a_Hidden[0]);
 
 
   // Now, calculate the net for the final output layer.
   //Activation
-  a_Output[0] = 0;
+  a_Output[0] = BiasO[0] * WeightO_B[0] + o_Hidden[0] * WeightO_H[0][0] + Input[0] * WeightO_I[0][1];
+
 
   //Activity
-  o_Output[0] = 0;
+  o_Output[0] = sigmoid(a_Output[0]);
 
 
   //STEP 3: Cal error (delta at output and delta at hidden)///////
@@ -148,36 +149,36 @@ double ANN_XNOR::FeedforwardNetwork (double i0, double i1, double d)
   //[1] find the delta of the output layer = error between Target T and Output = d-o_Output[0]:
 
   //Sigmoid (logistic function)
-  error = 0;
-  deltaOutput = 0; //From output layer
+  error = (d - o_Output[0]);
+  deltaOutput = o_Output[0]*(1-o_Output[0])*(d-o_Output[0]); //From output layer
 
   //[2] find the delta of the hidden layer
-  deltaHidden[0] = 0;
+  deltaHidden[0] = o_Hidden[0] * (1-o_Hidden[0])*(WeightO_H[0][0]*deltaOutput);
 
   //STEP 4: Update weights for Online learning//////////////
 
   ///////////Output////////////////////////////////////////////
-  DeltaWeightO_H[0][0] = BP_LEARNING*0;
+  DeltaWeightO_H[0][0] = BP_LEARNING * deltaOutput * o_Hidden[0];
   WeightO_H[0][0] = WeightO_H[0][0]+DeltaWeightO_H[0][0];
 
-  DeltaWeightO_B[0] = BP_LEARNING*0;
+  DeltaWeightO_B[0] = BP_LEARNING * deltaOutput*BiasO[0];
   WeightO_B[0] = WeightO_B[0]+DeltaWeightO_B[0];
 
-  DeltaWeightO_I[0] = BP_LEARNING*0;
+  DeltaWeightO_I[0] = BP_LEARNING*deltaOutput*Input[0];
   WeightO_I[0][0] = WeightO_I[0][0]+DeltaWeightO_I[0];
 
-  DeltaWeightO_I[1] = BP_LEARNING*0;
+  DeltaWeightO_I[1] = BP_LEARNING*deltaOutput*Input[1];
   WeightO_I[0][1] = WeightO_I[0][1]+DeltaWeightO_I[1];
 
   /////////Hidden0//////////////////////////////////////////////
-  DeltaWeightH_B[0] = BP_LEARNING*0;
+  DeltaWeightH_B[0] = BP_LEARNING*deltaHidden[0]*BiasH[0];
   WeightH_B[0] = WeightH_B[0]+DeltaWeightH_B[0];
 
 
-  DeltaWeightH_I[0][0] = BP_LEARNING*0;
+  DeltaWeightH_I[0][0] = BP_LEARNING*deltaHidden[0]*Input[0];
   WeightH_I[0][0] = WeightH_I[0][0]+DeltaWeightH_I[0][0];
 
-  DeltaWeightH_I[0][1] = BP_LEARNING*0;
+  DeltaWeightH_I[0][1] = BP_LEARNING*deltaHidden[0]*Input[1];
   WeightH_I[0][1] = WeightH_I[0][1] + DeltaWeightH_I[0][1];
 
 
@@ -186,17 +187,17 @@ double ANN_XNOR::FeedforwardNetwork (double i0, double i1, double d)
 
 
   //printf( "I1:%f I2:%f Out:%f \n",Input[0], Input[1], o_Output[0]);
+  printf("error: %f %f %f %f %f %f %f %f \n", error*error, WeightH_B[0], WeightH_I[0][0], WeightH_I[1][1], WeightO_I[0][0], WeightO_I[0][1], WeightO_B[0], WeightO_H[0][0]);
 
   saveFile1 <<error*error
-      <<"  "<<WeightH_B[0]
-                        <<"  "<<WeightH_I[0][0]
-                                             <<"  "<<WeightH_I[0][1]
-                                                                  <<"  "<<WeightO_I[0][0]
-                                                                                       <<" "<<WeightO_I[0][1]
-                                                                                                           <<" "<<WeightO_B[0]
-                                                                                                                            <<" "<<WeightO_H[0][0]
-                                                                                                                                                <<"   \n" << flush; //SAVE DATA
-
+  <<"  "<<WeightH_B[0]
+  <<"  "<<WeightH_I[0][0]
+  <<"  "<<WeightH_I[0][1]
+  <<"  "<<WeightO_I[0][0]
+  <<" "<<WeightO_I[0][1]
+  <<" "<<WeightO_B[0]
+  <<" "<<WeightO_H[0][0]
+  <<"   \n" << flush; //SAVE DATA
 
   return o_Output[0];
 
@@ -208,7 +209,7 @@ double ANN_XNOR::FeedforwardNetwork (double i0, double i1, double d)
 // ----------------------------------------------------------------------
 double ANN_XNOR::Run(double i0, double i1)
 {
-  
+
 
   WeightH_B[0] = 2.64;
   WeightH_I[0][0] = -7.092;
@@ -254,4 +255,3 @@ double ANN_XNOR::sigmoid(double num)
 
 
 }
-

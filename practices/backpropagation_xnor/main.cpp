@@ -7,7 +7,7 @@
 #include "ann_xnor.h"
 #include <string.h>
 #include <stdio.h>
-#define BPM_ITER	200000 
+#define BPM_ITER	100000
 ///////////////////////////////////////////
 
 ANN_XNOR* callann;
@@ -28,19 +28,19 @@ int main (int argc, char **argv)
 
 
     //XNOR sigmoid function training//
-    callann->FeedforwardNetwork(0,0,1);
+  /*  callann->FeedforwardNetwork(0,0,1);
     callann->FeedforwardNetwork(0,1,0);
     callann->FeedforwardNetwork(1,0,0);
     callann->FeedforwardNetwork(1,1,1);
 
-
+*/
     //XNOR function testing set //
-    /*
-callann->Run(0,0);
-callann->Run(0,1);
-callann->Run(1,0);
-callann->Run(1,1);
-     */
+
+  callann->Run(0,0);
+  callann->Run(0,1);
+  callann->Run(1,0);
+  callann->Run(1,1);
+
 
   }
 
